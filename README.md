@@ -1,0 +1,54 @@
+# shiftdiff: visual diff for screenshots that ignores layout shifts
+
+Pixel-by-pixel screenshot diffs break as soon as something is inserted near the top of a page. A 77 px banner on bbc.com pushes everything below it down, and a classic diff reports **26 % of the page changed**. shiftdiff aligns the rows first and reports **0.47 %**, which is about the size of the banner (0.55 % of the page).
+
+![Old vs new diff on bbc.com](examples/before-after.png)
+
+## How it works
+
+1. Both images are scaled to the same width (area averaging smooths anti-aliasing). Every pixel row is kept, so vertical shifts stay whole pixels.
+2. Each row gets a coarse fingerprint. Runs of identical rows (blank space, solid bars) are collapsed into one token, so the alignment is anchored on real content. Then the rows are aligned like lines in a text diff (`difflib`).
+3. Blocks that didn't match exactly try the offsets of the content around them and keep the one with the fewest differing pixels. This handles JPEG noise and edits inside shifted sections.
+4. Paired rows are compared with a colour tolerance, and isolated changed pixels are dropped.
+5. New rows count where they differ from the page background. Removed content counts too. Blank space that grew or shrank doesn't.
+
+It is about 250 lines of Python with numpy and Pillow. A 1920 × 14,000 px page takes about 2 s on one CPU core.
+
+## Try it
+
+```bash
+pip install -r requirements.txt
+python cli.py examples/example-old.png examples/example-new.png --out diff.jpg
+```
+
+```json
+{ "changePct": 1.544, "pixelByPixelPct": 4.56, "contentShiftPx": 82, "changedRegions": [ ... ], "diffImage": "diff.jpg" }
+```
+
+`--ignore x,y,width,height` masks rectangles (clocks, ads, carousels) in both images. From Python: `from shiftdiff import visual_diff`.
+
+## Measured results (18 Nov 2026)
+
+Desktop 1920 px, full page, PNG. "Banner" means a 61–82 px bar inserted at the top of the live page.
+
+| Page | Situation | Pixel by pixel | shiftdiff |
+|---|---|---|---|
+| example.com | captured twice | 0 % | 0 % |
+| BBC homepage | captured twice, content moved 16 px | 16.54 % | 0.03 % |
+| Notion pricing | captured twice, layout moved 79 px (JPEG) | 5.05 % | 0.53 % |
+| Wikipedia article | captured twice | 0 % | 0 % |
+| Notion pricing | banner (0.85 % of page) | 7.83 % | 0.85 % |
+| BBC homepage | banner (0.55 % of page) | 26.34 % | 0.47 % |
+| Wikipedia article | banner (0.43 % of page) | 2.01 % | 0.47 % |
+
+## Limitations
+
+- Only vertical shifts are aligned. A sidebar that becomes wider still shows as a change.
+- A single edited word is tiny compared with a whole page (0.003–0.02 % in our tests). It is still listed in `changedRegions`. To watch one price, crop to that block first.
+- Content that is reordered (two sections swap places) counts as changed.
+
+## Hosted version
+
+The same algorithm runs in [Website Screenshot & Change Monitor](https://apify.com/pegton/website-screenshot-monitor) on Apify. It takes the screenshots (4 devices, cookie banners hidden), stores the previous capture and learns each page's noise level. It costs $0.002 per screenshot. There's also a free [n8n workflow](https://github.com/Zapparelo/n8n-website-change-monitor) that e-mails you the diff images.
+
+MIT licence.
