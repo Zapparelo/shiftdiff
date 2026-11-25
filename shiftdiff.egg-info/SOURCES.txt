@@ -1,0 +1,11 @@
+LICENSE
+README.md
+pyproject.toml
+shiftdiff.py
+shiftdiff.egg-info/PKG-INFO
+shiftdiff.egg-info/SOURCES.txt
+shiftdiff.egg-info/dependency_links.txt
+shiftdiff.egg-info/entry_points.txt
+shiftdiff.egg-info/requires.txt
+shiftdiff.egg-info/top_level.txt
+tests/test_shiftdiff.py

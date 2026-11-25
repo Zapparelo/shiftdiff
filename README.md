@@ -1,5 +1,9 @@
 # shiftdiff: visual diff for screenshots that ignores layout shifts
 
+[![test](https://github.com/Zapparelo/shiftdiff/actions/workflows/test.yml/badge.svg)](https://github.com/Zapparelo/shiftdiff/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)
+
 Pixel-by-pixel screenshot diffs break as soon as something is inserted near the top of a page. A 77 px banner on bbc.com pushes everything below it down, and a classic diff reports **26 % of the page changed**. shiftdiff aligns the rows first and reports **0.47 %**, which is about the size of the banner (0.55 % of the page).
 
 ![Old vs new diff on bbc.com](examples/before-after.png)
@@ -17,9 +21,11 @@ It is about 250 lines of Python with numpy and Pillow. A 1920 × 14,000 px page 
 ## Try it
 
 ```bash
-pip install -r requirements.txt
-python cli.py examples/example-old.png examples/example-new.png --out diff.jpg
+pip install git+https://github.com/Zapparelo/shiftdiff
+shiftdiff old.png new.png --out diff.jpg
 ```
+
+Or from a clone: `pip install -r requirements.txt && python cli.py examples/example-old.png examples/example-new.png --out diff.jpg`
 
 ```json
 { "changePct": 1.544, "pixelByPixelPct": 4.56, "contentShiftPx": 82, "changedRegions": [ ... ], "diffImage": "diff.jpg" }
